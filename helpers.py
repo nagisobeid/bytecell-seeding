@@ -11,6 +11,7 @@ import database
 from random import *
 import os
 from dotenv import load_dotenv
+import pandas as pd
 
 load_dotenv()
 
@@ -26,6 +27,31 @@ def loadYaml( ):
 
 def fillHrefs():
     # GET PRODUCTS MISSING HREFS
+    fetcher = routes.DataFetch( )
+
+    prodIds = db.getProdsMissingHrefs()
+    for index, row in prodIds.iterrows():
+        #api call to bm 'offers' endpoint
+        fetcher.setUuid( row['UUID'] )
+        print(row['UUID'])
+        try:
+            data = fetcher.getOffers()
+            if data.status_code != 200:
+                raise Exception( f'Response err during getOffers : {data.status_code} '  )
+            dataJson = data.json()
+
+            for entry in dataJson:
+                if not entry['isDisabled']:
+                    if entry["link"]["params"]["uuid"] == row['UUID']:
+                        print('updating Href...')
+                        db.updateHref( row['UUID'],  entry["link"]['href'] )
+                        break
+            time.sleep( randint(1, 2) )
+
+        except Exception as e:
+            print( { 'exception': e } )
+
+    
 
 def getItems( yamlFile ):
     items = []

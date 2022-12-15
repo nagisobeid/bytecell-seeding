@@ -1,5 +1,7 @@
 import os
 import pyodbc
+import pandas as pd
+
 #from dotenv import load_dotenv 
  
 #load_dotenv()
@@ -139,4 +141,16 @@ class DataBase:
         availability = self.cursor.fetchone()
         return availability[0]
         #self.cnxn.commit()
-        
+
+    def getProdsMissingHrefs( self ):
+        sql = "exec [dbo].[getProductsMissingHrefs]"
+        data = pd.read_sql( sql, self.cnxn )
+        return data 
+
+    def updateHref( self, uuid, href ):
+        sql = "exec [dbo].[UpdateHref] @HREF=?, @UUID=?"
+        params = ( href, uuid )
+        self.cursor.execute( sql, params )
+        self.cnxn.commit()
+
+

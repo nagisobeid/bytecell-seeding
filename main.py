@@ -33,7 +33,8 @@ def main():
     # only run once
     #seedingProcess( dbo )
 
-    helpers.fillHrefs()
+    #helpers.fillHrefs()
+    helpers.fillReviews()
 
 if __name__=="__main__":
     main() 

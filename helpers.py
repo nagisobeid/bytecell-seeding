@@ -1,6 +1,7 @@
 import yaml
 import builder
 import routes
+import routesbytecell
 import time
 import json
 import copy
@@ -12,6 +13,7 @@ from random import *
 import os
 from dotenv import load_dotenv
 import pandas as pd
+import requests
 
 load_dotenv()
 
@@ -24,7 +26,7 @@ def loadYaml( ):
     with open(r'../data.yml') as yamlFile:
         data = yaml.load( yamlFile, Loader=yaml.FullLoader )
         return data
-
+    
 def fillHrefs():
     # GET PRODUCTS MISSING HREFS
     fetcher = routes.DataFetch( )
@@ -37,7 +39,7 @@ def fillHrefs():
         try:
             data = fetcher.getOffers()
             if data.status_code != 200:
-                raise Exception( f'Response err during getOffers : {data.status_code} '  )
+                raise Exception( f'Response err during getOffers : {data.status_code}' )
             dataJson = data.json()
 
             for entry in dataJson:
@@ -348,17 +350,34 @@ def getReviews( fetcher ):
     page = 1
     allReviews = []
     hasNext = True
-    while hasNext and page < 3:
-        response = fetcher.getReviews( page )
-        if response.status_code == 200:
-            reviews = response.json()
-            allReviews.extend( reviews['results'] )
-            if reviews['next']:
-                page = page+1
-            else:
-                hasNext = False
-        else:
-            time.sleep( 30 )
+    proxies = get_proxies()
+    #print(proxies)
+    #exit()
+
+    while hasNext and page < 14:
+        proxy = getProxy(proxies)
+        useragent = getUserAgent() #'X-Forwarded-For':'1.1.1.1'
+        headers = {'User-Agent': useragent}#, 'X-Forwarded-For': proxy }
+        fetcher.setHeaders( headers )
+        fetcher.setProxy( proxy )
+        try:
+            response = fetcher.getReviews( page )
+            #print(response)
+            if response.status_code == 200:
+                reviews = response.json()
+                allReviews.extend( reviews['results'] )
+                if reviews['next']:
+                    page = page+1
+                    time.sleep( randint(1, 3) )
+                else:
+                    hasNext = False
+                time.sleep( randint(3, 7) )
+            #else if response.status_code == 403:
+            elif response.status_code == 429:
+                print('30 Sec Sleep Triggered - ' + str(response.status_code))
+                time.sleep( 30 )
+        except Exception as e:
+            print( e )
 
     return allReviews
 
@@ -449,11 +468,87 @@ def prepareForInsertLog( system, message, uuid, method, status ):
 
     return prepared
 
+def fillReviews( ):
+    bc = routesbytecell.ByteCell( )
+    #proxy = getProxy()
+
+    fetcher = routes.DataFetch( )
+    
+    try:
+        ids = bc.getProductsMissingReviews()
+        #x = bc.getTest()
+        #print(x)
+        #exit()
+        ids = ids.json()
+
+        #ids = {{'UUID': 'fbd02778-e9b3-484c-88c2-81bf300b48bf'}
+        #ids = {'message': 'success', 'data': [{'UUID': 'fbd02778-e9b3-484c-88c2-81bf300b48bf'}]}
+       
+        for id in ids['data']:
+            rs = []
+            fetcher.setUuid( str( id['UUID'] ) )
+            reviews = getReviews( fetcher )
+
+            for review in reviews:
+                r = {
+                    "UUID"              : str( id['UUID'] ),
+                    "FN"                : review['firstName'],
+                    "LN"                : review['lastName'],
+                    "DATEREVIEW"        : review['date'],
+                    "DATEPURCHASE"      : review['purchaseDate'],
+                    "RATE"              : review['rate'],
+                    "COMMENT"           : review['comment']
+                }
+                rs.append( r )
+            if rs:
+                data = {
+                    "REVIEWS" : rs
+                }
+                print( id['UUID'] + ' <--------> ************************ Reviews Found' )
+                bc.insertReviews( data )
+                time.sleep( 5 )
+            elif not rs:
+                print( id['UUID'] + ' <--------> Reviews NOT Found' )
+
+            
+    except Exception as e:
+        #print('err')
+        print( e )
+
+def get_proxies():
+    from lxml.html import fromstring
+    url = 'https://free-proxy-list.net/'
+    response = requests.get(url)
+    parser = fromstring(response.text)
+    #proxies = set()
+    proxies = []
+    for i in parser.xpath('//tbody/tr')[:20]:
+        #print( ":".join([i.xpath('.//td[1]/text()')[0], i.xpath('.//td[2]/text()')[0]]))
+        if i.xpath('.//td[7][contains(text(),"no")]'):
+        #Grabbing IP and corresponding PORT
+            #proxy = ":".join([i.xpath('.//td[1]/text()')[0], i.xpath('.//td[2]/text()')[0]])
+            proxy = i.xpath('.//td[1]/text()')[0]
+            #print(proxy)
+            proxies.append(proxy)
+            #proxies.add(proxy)
+    return proxies
+
+#get_proxies()
+
+def getProxy(proxies):
+    import random
+
+    random.shuffle(proxies)
+    return proxies[0]
+
+def getUserAgent():
+    from fake_useragent import UserAgent
+    ua = UserAgent(verify_ssl=False)
+    return ua.random
 
 def calculateByteCellPrice( price ):
     price = price + ( price * .08 )
     return price
-
 
 def jsonPrint( data ):
     print( json.dumps( data, indent = 4) )

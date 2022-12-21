@@ -4,16 +4,20 @@ import webbrowser
 import requests
 import time
 
+requests.trust_env = False
+
 class DataFetch:
 
     def __init__( self ):
         self.id = None
         self.uuid = None
-        self.headers = {'User-Agent': 'Mozilla/5.0'}
+        #self.headers = {'User-Agent': 'Mozilla/5.0'}
+        self.headers = {}
+        self.proxy = None
 
     def getReviews( self, page ):
         route = f'https://www.backmarket.com/bm/reviews/v2/product/{self.uuid}/list?page={page}'
-        return DataFetch.request( route, self.headers )
+        return DataFetch.request( route, self.headers, {"http": self.proxy} )
 
     def getOffers( self ):
         route = f'https://www.backmarket.com/bm/product/{self.uuid}/v3/best_offers'
@@ -41,10 +45,20 @@ class DataFetch:
         self.id = id
         self.uuid = uuid
 
+    def setHeaders( self, headers ):
+        self.headers = headers
+    
+    def setProxy( self, proxy ):
+        self.proxy = proxy
+
     @staticmethod
-    def request( route, headers ):
+    def request( route, headers, proxies ):
         try:
-            response = requests.get( route, headers=headers )
+            print( headers, proxies )
+            #response = requests.get( route, headers=headers )
+            response = requests.get( route, headers=headers, proxies=proxies )
+            #response = requests.get( route, headers=headers, proxies={"http": '159.89.128.130:8989', "http": '159.89.128.130:8989'} )
             return response
         except Exception as e:
-            return e
+            print( e )
+            raise Exception( e )

@@ -3,6 +3,8 @@ import database
 import worker
 import os
 from dotenv import load_dotenv
+import sys
+from datetime import datetime
 
 load_dotenv()
 
@@ -36,9 +38,12 @@ def main():
 
     #helpers.fillHrefs()
     #helpers.fillReviews()
-    
+    #print('\n')
     #check if prices have changed and update the db
-    worker.checkPrices()
-
+    print( f"******************** processing { sys.argv[1] } **********************\n" )
+    print( f"START TIME : {datetime.now()} ")
+    worker.checkPrices( sys.argv[1] )
+    print( f"END TIME : {datetime.now()}\n")
+    print( f"*************** completed processing { sys.argv[1] } *****************\n" )
 if __name__=="__main__":
     main() 

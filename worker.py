@@ -25,16 +25,14 @@ load_dotenv()
 db = database.DataBase( os.getenv('DB_SERVER'), os.getenv('DB'), os.getenv('USERNAME'), os.getenv('PASSWORD') )
 
 
-def checkPrices():
+def checkPrices( collection ):
     #setup
     bc = routesbytecell.ByteCell( )
-    bc.setParams( { 'collection' : 'galaxy' } )
-
+    bc.setParams( { 'collection' : collection } )
+    #print( 'processing : ' + str( collection ) )
     #get the product uuids and hrefs
     targetProds = bc.getProductsForPriceChecks()
     tarData = targetProds.json()#helpers.extractData( targetProds )
-    #print(tarData)
-    #return
     dfTarData = pd.DataFrame( tarData )
     
     #get every product entry and store localy to prevent db requests
@@ -46,10 +44,6 @@ def checkPrices():
     proxies = helpers.get_proxies()
     fetcher = routes.DataFetch()
 
-    #start looping target prods
-    #tarData = [ { 'UUID' : 'b51131db-e2ac-4c16-9dff-004cf5714ed6' } ] # fe903edb-00f2-4a91-b497-d55fd4873c76 cbbc065f-728e-4e7d-8844-c6b4a3f39c61
-    
-    #testing
     #tarData = tarData[0:5]
 
     updated = []

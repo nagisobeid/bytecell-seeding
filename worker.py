@@ -28,7 +28,7 @@ db = database.DataBase( os.getenv('DB_SERVER'), os.getenv('DB'), os.getenv('USER
 def checkPrices():
     #setup
     bc = routesbytecell.ByteCell( )
-    bc.setParams( { 'collection' : 'iphone' } )
+    bc.setParams( { 'collection' : 'galaxy' } )
 
     #get the product uuids and hrefs
     targetProds = bc.getProductsForPriceChecks()

@@ -1,5 +1,6 @@
 import helpers
 import database
+import worker
 import os
 from dotenv import load_dotenv
 
@@ -34,7 +35,10 @@ def main():
     #seedingProcess( dbo )
 
     #helpers.fillHrefs()
-    helpers.fillReviews()
+    #helpers.fillReviews()
+    
+    #check if prices have changed and update the db
+    worker.checkPrices()
 
 if __name__=="__main__":
     main() 

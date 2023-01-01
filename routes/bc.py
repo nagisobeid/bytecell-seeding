@@ -17,10 +17,6 @@ class ByteCell:
         }
         #self.baseUrl = 'localhost'
         self.baseUrl = os.getenv('BYTECELLAPIURL')
-        self.params = {}
-    
-    def setParams( self, params ):
-        self.params = params
 
     def insertReviews( self, data ):
         route = f'{self.baseUrl}/reviews'
@@ -36,7 +32,7 @@ class ByteCell:
 
     def getProductsForPriceChecks( self ):
         route = f'{self.baseUrl}/products/checkprices'
-        return ByteCell.getRequest( route, self.headers, self.params )
+        return ByteCell.getRequest( route, self.headers )
     
     def getEveryProductEntry( self ):
         route = f'{self.baseUrl}/products'
@@ -51,9 +47,9 @@ class ByteCell:
         return ByteCell.putRequest( route, data, self.headers )
 
     @staticmethod
-    def getRequest( route, headers, params={} ):
+    def getRequest( route, headers ):
         try:
-            response = requests.get( route, headers=headers, params=params )
+            response = requests.get( route, headers=headers )
             return response
         except Exception as e:
             return e

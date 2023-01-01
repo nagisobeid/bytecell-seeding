@@ -550,6 +550,9 @@ def calculateByteCellPrice( price ):
     price = price + ( price * .08 )
     return price
 
+def extractData( res ):
+    return res.json()['data']
+
 def jsonPrint( data ):
     print( json.dumps( data, indent = 4) )
     exit()

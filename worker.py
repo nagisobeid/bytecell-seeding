@@ -36,7 +36,6 @@ def checkPrices( collection ):
         tarData = targetProds.json()#helpers.extractData( targetProds )
         #print(tarData)
         dfTarData = pd.DataFrame( tarData )
->>>>>>> c33a371fe581d9ea64f1c9333c58f0794d54761c
     
         #get every product entry and store localy to prevent db requests
         allProds = bc.getEveryProductEntry()

@@ -47,6 +47,7 @@ def checkPrices( collection ):
         fetcher = routes.DataFetch()
     except Exception as e:
         print( e )
+        print(tarData)
         return e
 
     #tarData = tarData[0:5]

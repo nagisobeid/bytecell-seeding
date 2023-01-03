@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 import sys
 from datetime import datetime
+from termcolor import colored
 
 load_dotenv()
 
@@ -42,7 +43,9 @@ def main():
     #check if prices have changed and update the db
     print( f"******************** processing { sys.argv[1] } **********************\n" )
     print( f"START TIME : {datetime.now()} ")
+    #print( colored( f"START TIME : {datetime.now()} " , 'green' ) )
     worker.checkPrices( sys.argv[1] )
+    #print( colored( f"END TIME : {datetime.now()}\n" , 'red' ) )
     print( f"END TIME : {datetime.now()}\n")
     print( f"*************** completed processing { sys.argv[1] } *****************\n" )
 if __name__=="__main__":

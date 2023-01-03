@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 import sys
 from datetime import datetime
-from termcolor import colored
+#from termcolor import colored
 
 load_dotenv()
 

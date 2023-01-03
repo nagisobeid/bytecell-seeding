@@ -26,26 +26,29 @@ db = database.DataBase( os.getenv('DB_SERVER'), os.getenv('DB'), os.getenv('USER
 
 
 def checkPrices( collection ):
-    #setup
+    try:
+        #setup
+        bc = routesbytecell.ByteCell( )
+        bc.setParams( { 'collection' : collection } )
+        #print( 'processing : ' + str( collection ) )
+        #get the product uuids and hrefs
+        targetProds = bc.getProductsForPriceChecks()
+        tarData = targetProds.json()#helpers.extractData( targetProds )
+        #print(tarData)
+        dfTarData = pd.DataFrame( tarData )
+>>>>>>> c33a371fe581d9ea64f1c9333c58f0794d54761c
     
+        #get every product entry and store localy to prevent db requests
+        allProds = bc.getEveryProductEntry()
+        allData = helpers.extractData( allProds )
+        dfAllData = pd.DataFrame( allData )
     
-    bc = routesbytecell.ByteCell( )
-    bc.setParams( { 'collection' : collection } )
-    #print( 'processing : ' + str( collection ) )
-    #get the product uuids and hrefs
-    targetProds = bc.getProductsForPriceChecks()
-    #print( targetProds )
-    tarData = targetProds.json()#helpers.extractData( targetProds )
-    dfTarData = pd.DataFrame( tarData )
-    
-    #get every product entry and store localy to prevent db requests
-    allProds = bc.getEveryProductEntry()
-    allData = helpers.extractData( allProds )
-    dfAllData = pd.DataFrame( allData )
-    
-    #datafetch setup
-    proxies = helpers.get_proxies()
-    fetcher = routes.DataFetch()
+        #datafetch setup
+        proxies = helpers.get_proxies()
+        fetcher = routes.DataFetch()
+    except Exception as e:
+        print( e )
+        return e
 
     #tarData = tarData[0:5]
 

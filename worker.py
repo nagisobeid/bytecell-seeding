@@ -27,11 +27,14 @@ db = database.DataBase( os.getenv('DB_SERVER'), os.getenv('DB'), os.getenv('USER
 
 def checkPrices( collection ):
     #setup
+    
+    
     bc = routesbytecell.ByteCell( )
     bc.setParams( { 'collection' : collection } )
     #print( 'processing : ' + str( collection ) )
     #get the product uuids and hrefs
     targetProds = bc.getProductsForPriceChecks()
+    #print( targetProds )
     tarData = targetProds.json()#helpers.extractData( targetProds )
     dfTarData = pd.DataFrame( tarData )
     

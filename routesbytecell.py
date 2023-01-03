@@ -54,6 +54,7 @@ class ByteCell:
     def getRequest( route, headers, params={} ):
         try:
             response = requests.get( route, headers=headers, params=params )
+            #print( response )
             return response
         except Exception as e:
             return e

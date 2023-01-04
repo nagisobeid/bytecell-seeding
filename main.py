@@ -33,7 +33,7 @@ def main():
     items = ['galaxy','macbook', 'gaming', 'ipad', 'galaxy-tab', 'apple-watch']
 
     # initialize db sql
-    dbo = database.DataBase( os.getenv('DB_SERVER'), os.getenv('DB'), os.getenv('USERNAME'), os.getenv('PASSWORD') )
+    #dbo = database.DataBase( os.getenv('DB_SERVER'), os.getenv('DB'), os.getenv('USERNAME'), os.getenv('PASSWORD') )
     # only run once
     #seedingProcess( dbo )
 

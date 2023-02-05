@@ -22,8 +22,9 @@ import logging as logger
 load_dotenv()
 
 # initialize db sql
-db = database.DataBase( os.getenv('DB_SERVER'), os.getenv('DB'), os.getenv('USERNAME'), os.getenv('PASSWORD') )
 
+print( 'Connecting to DB Server ->', os.getenv('DB_SERVER'), os.getenv('DB'), os.getenv('DB_USERNAME') )
+db = database.DataBase( os.getenv('DB_SERVER'), os.getenv('DB'), os.getenv('DB_USERNAME'), os.getenv('PASSWORD') )
 
 def checkPrices( collection ):
     try:

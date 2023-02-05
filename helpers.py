@@ -20,7 +20,8 @@ load_dotenv()
 GLOBAL_UUIDS = []
 
 # initialize db sql
-db = database.DataBase( os.getenv('DB_SERVER'), os.getenv('DB'), os.getenv('USERNAME'), os.getenv('PASSWORD') )
+#print( os.getenv('DB_SERVER'), os.getenv('DB') )
+db = database.DataBase( os.getenv('DB_SERVER'), os.getenv('DB'), os.getenv('DB_USERNAME'), os.getenv('PASSWORD') )
 
 def loadYaml( ):
     with open(r'../data.yml') as yamlFile:

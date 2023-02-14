@@ -1,7 +1,5 @@
 import yaml
 import builder
-import routes
-import routesbytecell
 import time
 import json
 import copy
@@ -16,6 +14,9 @@ import pandas as pd
 import requests
 
 load_dotenv()
+import paths
+import bc as bcr
+import bm as bmr
 
 GLOBAL_UUIDS = []
 
@@ -30,7 +31,7 @@ def loadYaml( ):
     
 def fillHrefs():
     # GET PRODUCTS MISSING HREFS
-    fetcher = routes.DataFetch( )
+    fetcher = bmr.DataFetch( )
 
     prodIds = db.getProdsMissingHrefs()
     for index, row in prodIds.iterrows():
@@ -97,7 +98,7 @@ def getBackMarketIDsAndUUIDs( response ):
 #because a single bcid/id can have mulitple uuids for variants
 def addVariantUUIDS( ids ):
     toDelete = []
-    fetcher = routes.DataFetch( )
+    fetcher = bmr.DataFetch( )
     for idx, id in enumerate( ids ):
         log = prepareForInsertLog( 'helpers.py', 'ID NUM : ' + str(idx) + '/' + str(len(ids)), '', 'addVariantUUIDS', '' )
         global db
@@ -357,7 +358,8 @@ def getReviews( fetcher ):
 
     while hasNext and page < 14:
         proxy = getProxy(proxies)
-        useragent = getUserAgent() #'X-Forwarded-For':'1.1.1.1'
+        #useragent = getUserAgent() #'X-Forwarded-For':'1.1.1.1'
+        useragent = ''
         headers = {'User-Agent': useragent}#, 'X-Forwarded-For': proxy }
         fetcher.setHeaders( headers )
         fetcher.setProxy( proxy )
@@ -384,7 +386,7 @@ def getReviews( fetcher ):
 
 #collect all relevant data for a specefic product
 def purgeProducts( collections ):
-    fetcher = routes.DataFetch()
+    fetcher = bmr.DataFetch()
     print('Purging Collections ...')
     with alive_bar(len(collections), force_tty=True) as bar:
         for collection in collections:
@@ -470,10 +472,10 @@ def prepareForInsertLog( system, message, uuid, method, status ):
     return prepared
 
 def fillReviews( ):
-    bc = routesbytecell.ByteCell( )
+    bc = bcr.ByteCell( )
     #proxy = getProxy()
 
-    fetcher = routes.DataFetch( )
+    fetcher = bmr.DataFetch( )
     
     try:
         ids = bc.getProductsMissingReviews()
@@ -542,10 +544,10 @@ def getProxy(proxies):
     random.shuffle(proxies)
     return proxies[0]
 
-def getUserAgent():
-    from fake_useragent import UserAgent
-    ua = UserAgent(verify_ssl=False)
-    return ua.random
+#def getUserAgent():
+#    from fake_useragent import UserAgent
+#    ua = UserAgent(verify_ssl=False)
+#    return ua.random
 
 def calculateByteCellPrice( price ):
     price = price + ( price * .08 )

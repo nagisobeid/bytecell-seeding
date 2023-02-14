@@ -3,7 +3,7 @@ import json
 import urllib
 import copy
  
-import routes
+#import routes
 
 class Builder: 
     def __init__( self, facets, filters, attributesToRetrieve, collectionParams ):

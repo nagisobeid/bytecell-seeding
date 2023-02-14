@@ -4,3 +4,7 @@ log
 /logs
 /env
 env
+build
+dist
+/build
+/dist

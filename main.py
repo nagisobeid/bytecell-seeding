@@ -1,13 +1,15 @@
-import helpers
-import database
+
 import worker
 import os
 from dotenv import load_dotenv
 import sys
 from datetime import datetime
-#from termcolor import colored
 
 load_dotenv()
+import paths
+import helpers
+import database
+# finish parsing routes and loop over them to add to sys path for easy import modules
 
 # ONLY RUN ONCE!
 def seedingProcess( db ):

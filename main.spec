@@ -6,7 +6,7 @@ block_cipher = None
 
 a = Analysis(
     ['main.py'],
-    pathex=['.\\env\\Lib\\site-packages'],
+    pathex=['./env/lib/python3.9/site-packages'],
     binaries=[],
     datas=[],
     hiddenimports=['yaml', 'tqdm', 'alive_progress', 'pyodbc'],

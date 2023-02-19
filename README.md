@@ -12,6 +12,7 @@
 3 ) Install dependencies
 -		 pip install -r requirements.txt
 
+4 ) ensure .env has all required variables
 
 
 # # Create executable ( optional )
@@ -19,4 +20,4 @@
 -		pyinstaller --onefile --paths=.\env\Lib\site-packages --hidden-import=yaml --hidden-import=tqdm --hidden-import=alive_progress --hidden-import=pyodbc .\main.py
 
 2 ) pyinstall command : linux
-		pyinstaller --onefile --paths=./env/lib/python3.9/site-packages --hidden-import=yaml --hidden-import=tqdm --hidden-import=alive_progress --hidden-import=pyodbc ./main.py
+-		pyinstaller --onefile --paths=./env/lib/python3.9/site-packages --hidden-import=yaml --hidden-import=tqdm --hidden-import=alive_progress --hidden-import=pyodbc ./main.py

@@ -5,6 +5,4 @@ log
 /env
 env
 build
-dist
 /build
-/dist

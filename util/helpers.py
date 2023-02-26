@@ -540,7 +540,7 @@ def get_proxies():
 
 def getProxy(proxies):
     import random
-
+    #print(proxies)
     random.shuffle(proxies)
     return proxies[0]
 
@@ -550,7 +550,7 @@ def getProxy(proxies):
 #    return ua.random
 
 def calculateByteCellPrice( price ):
-    price = price + ( price * .08 )
+    price = price + ( price * .10 )
     return price
 
 def extractData( res ):

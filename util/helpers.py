@@ -550,7 +550,7 @@ def getProxy(proxies):
 #    return ua.random
 
 def calculateByteCellPrice( price ):
-    price = price + ( price * .10 )
+    price = price + ( price * .025 )
     return price
 
 def extractData( res ):

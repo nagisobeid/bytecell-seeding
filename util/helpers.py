@@ -541,7 +541,7 @@ def get_proxies():
 
 def getProxy(proxies):
     import random
-
+    #print(proxies)
     random.shuffle(proxies)
     return proxies[0]
 

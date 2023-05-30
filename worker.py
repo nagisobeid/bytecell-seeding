@@ -1,11 +1,9 @@
-
 import time
 import json
 import os
-
+import ast
 from dotenv import load_dotenv
 load_dotenv()
-
 import pandas as pd
 import pandasql as ps
 import requests
@@ -13,7 +11,7 @@ import math
 import traceback
 import logging as logger
 import sys
-
+import numpy as np
 import paths
 import bc as bcr
 import bm as bmr
@@ -26,55 +24,52 @@ import helpers
 def checkPrices( collection ):
     try:
         #setup
-        bc = bcr.ByteCell( )
+        bc = bcr.ByteCell()
         bc.setParams( { 'collection' : collection } )
-        #print( 'processing : ' + str( collection ) )
+        
         #get the product uuids and hrefs
-        targetProds = bc.getProductsForPriceChecks()
-        tarData = targetProds.json()#helpers.extractData( targetProds )
-        #print(tarData)
-        dfTarData = pd.DataFrame( tarData )
+        productProdsResponse = bc.getProductsForPriceChecks()
+        products = productProdsResponse.json()
+        
+        dfProducts = pd.DataFrame( products )
     
         #get every product entry and store localy to prevent db requests
         allProds = bc.getEveryProductEntry()
         allData = helpers.extractData( allProds )
         dfAllData = pd.DataFrame( allData )
-        #print(dfAllData )
+
+        dfAllData.rename(columns = {'price':'oldPrice'}, inplace = True)
 
         #datafetch setup
         proxies = helpers.get_proxies()
         fetcher = bmr.DataFetch()
     except Exception as e:
         print( e )
-        print(tarData)
         return e
 
-    #tarData = tarData[0:5]
+    #products = products[0:5]
 
-    updated = []
     HTTP_LIMIT_COUNT = 0
 
-    for target in tarData:
+    productDataFrames = []
+    xx=0
+    for product in products:
+        xx=xx+1
+        if(xx > 6):
+            break
         #additional prep on every loop
-        #res = ps.sqldf( f"SELECT * FROM dfAllData WHERE UUID = {target['UUID']}")
-        fetcher.setUuid( target['UUID'] )
-        proxy = helpers.getProxy(proxies)
-        #useragent = helpers.getUserAgent() #'X-Forwarded-For':'1.1.1.1'
+        fetcher.setUuid( product['UUID'] )
+        proxy = '' # helpers.getProxy(proxies)
         useragent = ''
-        headers = {'User-Agent': useragent}#, 'X-Forwarded-For': proxy }
+        headers = {'User-Agent': useragent}
         fetcher.setHeaders( headers )
         fetcher.setProxy( proxy )
 
-        #try send request
+        #try send request to backmarket
         try:
-            res = fetcher.getOffers()#.json()
-            #sleep for a couple of sec
-            #time.sleep( randint(1, 3) )
+            res = fetcher.getOffers()
             time.sleep( 1 )
     
-            #if "error" in res:
-            #    raise Exception( res )
-
             if res.status_code != 200:
                 if res.status_code == 429:
                     HTTP_LIMIT_COUNT = HTTP_LIMIT_COUNT + 1
@@ -85,76 +80,57 @@ def checkPrices( collection ):
                 break
             
             res = res.json()
-            
-            dfRes = pd.DataFrame( res )
+
+            dfBackMarketProduct = pd.DataFrame( res )
+            dfBackMarketProduct['uuid'] = product['UUID']
+
+            #filter what we need
             try:
-                df2 = dfRes.loc[:, ["price","backboxGrade","isDisabled"]]
-            except Exception as e:
-                raise Exception( { 'error' : e } )
+                # try to get only the price, backboxgrade, isdisabled, and uuid
+                dfPriceAndConditionAndStatus = dfBackMarketProduct.loc[:, ["price","backboxGrade","isDisabled","uuid"]]
+            except:
+                # if fail, most likely because price is missing( prod not in stock ), therefore, set a default price value to continue
+                dfBackMarketProduct['price'] =  {'amount': 'False', 'currency': 'USD'}
+                # then get only the price, backboxgrade, isdisabled, and uuid
+                dfPriceAndConditionAndStatus = dfBackMarketProduct.loc[:, ["price","backboxGrade","isDisabled","uuid"]]
 
-            l = df2.values.tolist()
+            # replace all "NaN" values in the [price] column with "False", although this should not be an issue because of the try/except block
+            dfPriceAndConditionAndStatus["price"] = dfPriceAndConditionAndStatus["price"].replace( np.nan, 'False' )
 
-            for i in l:
-                d = {
-                        'UUID'          :   target['UUID'],
-                        'PRICE'         :   '',
-                        'BMPRICE'       :   '',
-                        'CONDITION'     :   '',
-                        'AVAILSTATUS'   :   ''
-                    }
+            # because we cant replace with an object above, replace all False with object here
+            dfPriceAndConditionAndStatus['price'] = np.where(dfPriceAndConditionAndStatus['price'] == "False", {'amount': 'False', 'currency': 'USD'}, dfPriceAndConditionAndStatus['price'])
 
-                try:
-                    if i[0]['amount']:
-                        d['BMPRICE'] = round(float( i[0]['amount'] ), 2)
-
-                except Exception as ex:
-                    if math.isnan( i[0] ):
-                        # added to query to replace the initial 0 value of prods that were no longer available
-                        res = dfAllData.query( f"uuid == @target['UUID'] and condition == @i[1]['name']" )
-
-                        oldBmPrice = res['bmPrice'].loc[res.index[0]]
-                        d['BMPRICE'] = oldBmPrice
-
-                d['CONDITION'] = i[1]['name']
-                d['AVAILSTATUS'] = int( not i[2] )
-                d['PRICE'] = round(helpers.calculateByteCellPrice( d['BMPRICE'] ), 2)
-
-                #d['PRICECHAGNED'] = 1 if d['BMPRICE'] != b else 0
-
-                updated.append( d )
-                #print( d )
-            #print( "==============================" )
-
+            productDataFrames.append( dfPriceAndConditionAndStatus )
         except Exception as e:
-            #traceback.format_exc()
-            #logger.exception( e )
             print( e )
-            #set product default to not avail for all otpions
-            updated.extend( setAsNotAvail( target['UUID'], dfAllData ) )
 
-    print('Request sent...')
+    # now lets merge the dataframes
+    backMarketPriceData = pd.concat( productDataFrames, ignore_index=True )
+    # extract the name from the backbox grade
+    backMarketPriceData['backboxGrade'] = np.where( backMarketPriceData['backboxGrade'] != 5, backMarketPriceData['backboxGrade'].apply(lambda x: x.get('name')) , backMarketPriceData['backboxGrade'])
+    # extract the amount from the price
+    backMarketPriceData['price'] = np.where( backMarketPriceData['price'] != 'False', backMarketPriceData['price'].apply(lambda x: x.get('amount')) , backMarketPriceData['price'])
+
+    backMarketPriceData.rename(columns = {'backboxGrade':'condition'}, inplace = True)
+
+    merged = pd.merge( backMarketPriceData, dfAllData, how="left", on=['condition','uuid'] )
+    merged.rename(columns = {'price': 'BMPRICE', 'uuid' : 'UUID', 'condition' : 'CONDITION', 'isDisabled' : 'AVAILSTATUS' }, inplace = True)
+
+    # replace values
+    merged['AVAILSTATUS'] = np.where( merged['AVAILSTATUS'] == True, "1x" , merged['AVAILSTATUS'])
+    merged['AVAILSTATUS'] = np.where( merged['AVAILSTATUS'] == 'False', 1 , merged['AVAILSTATUS'])
+    merged['AVAILSTATUS'] = np.where( merged['AVAILSTATUS'] == "1x", 0 , merged['AVAILSTATUS'])
+
+    merged['PRICE'] = np.where( merged['BMPRICE'] == 'False', merged['oldPrice'] , merged['BMPRICE'])
+
+    merged['PRICE'] = merged['PRICE'].apply( lambda x: round( helpers.calculateByteCellPrice(float(x)), 2) )
+    final = merged.loc[:,['CONDITION','AVAILSTATUS','UUID','PRICE','BMPRICE']]
+    print( final )
+
+    updated = final.to_dict( 'records' )
+    #print( updated )
+
+    print('Sending request...')
     response = bc.updateProducts( { 'json' : json.dumps( { "PRODUCTS" : updated } ) } )
+    print('Request sent')
     print( response.json() )
-        
-def setAsNotAvail( uuid, dfAllData ):
-    conditions = ['Fair','Good','Excellent']
-    data = []
-
-    for c in conditions:
-        # added this query to replace the initial 0 price value of prods that were no longer available
-        res = dfAllData.query( f"uuid == @uuid and condition == @c" )
-
-        oldBmPrice = res['bmPrice'].loc[res.index[0]]
-        oldPrice = res['price'].loc[res.index[0]]
-        o = {
-            'UUID'          :   uuid,
-            'PRICE'         :   oldPrice,
-            'BMPRICE'       :   oldBmPrice,
-            'CONDITION'     :   c,
-            'AVAILSTATUS'   :   0
-        }
-        #print( o )
-
-        data.append( o )
-    
-    return data

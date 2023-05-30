@@ -22,7 +22,8 @@ GLOBAL_UUIDS = []
 
 # initialize db sql
 #print( os.getenv('DB_SERVER'), os.getenv('DB') )
-db = database.DataBase( os.getenv('DB_SERVER'), os.getenv('DB'), os.getenv('DB_USERNAME'), os.getenv('PASSWORD') )
+db = False
+#db = database.DataBase( os.getenv('DB_SERVER'), os.getenv('DB'), os.getenv('DB_USERNAME'), os.getenv('PASSWORD') )
 
 def loadYaml( ):
     with open(r'../data.yml') as yamlFile:
@@ -550,7 +551,7 @@ def getProxy(proxies):
 #    return ua.random
 
 def calculateByteCellPrice( price ):
-    price = price + ( price * .08 )
+    price = float(price) + ( float(price) * .00 )
     return price
 
 def extractData( res ):

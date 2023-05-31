@@ -52,11 +52,11 @@ def checkPrices( collection ):
     HTTP_LIMIT_COUNT = 0
 
     productDataFrames = []
-    xx=0
+    #xx=0
     for product in products:
-        xx=xx+1
-        if(xx > 6):
-            break
+        #xx=xx+1
+        #if(xx > 6):
+        #    break
         #additional prep on every loop
         fetcher.setUuid( product['UUID'] )
         proxy = '' # helpers.getProxy(proxies)
